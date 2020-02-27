@@ -1,0 +1,16 @@
+<div class="fullscreen-image">
+  <div class="fullscreen-image__side">
+    <button (click)="close()">Close</button>
+  </div>
+  <div
+    class="fullscreen-image__image"
+    [class.fullscreen-image__image--loaded]="loaded"
+    [class.fullscreen-image__image--landscape]="isLandscape"
+    [class.fullscreen-image__image--portrait]="!isLandscape"
+  >
+    <img [src]="data.src" (load)="determineOrientation($event)" />
+  </div>
+  <div class="fullscreen-image__side fullscreen-image__side--right">
+    <button>Share</button>
+  </div>
+</div>

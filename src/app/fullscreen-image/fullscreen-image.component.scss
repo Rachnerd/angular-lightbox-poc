@@ -1,0 +1,46 @@
+.fullscreen-image {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  &__image {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background-color: white;
+    opacity: 0;
+
+    &--loaded {
+      opacity: 1;
+    }
+
+    &--landscape img {
+      width: 75vw;
+    }
+    &--portrait img {
+      height: 75vh;
+    }
+  }
+
+  &__side {
+    transition: opacity 0.2s ease;
+    box-sizing: border-box;
+    padding: 2em;
+    height: 100vh;
+    flex: 1;
+    opacity: 1;
+
+    &--right {
+      text-align: right;
+    }
+
+    &--hidden {
+      opacity: 0;
+    }
+  }
+}

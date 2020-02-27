@@ -1,0 +1,5 @@
+<div class="lightbox" [class.lightbox--open]="isOpen" (click)="close()">
+  <div class="lightbox__content" (click)="preventClose($event)">
+    <ng-template pocLightboxHost></ng-template>
+  </div>
+</div>
