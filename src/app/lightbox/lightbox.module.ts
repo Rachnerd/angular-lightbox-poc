@@ -8,6 +8,7 @@ import { LightboxHostDirective } from './shared/lightbox-host.directive';
   imports: [
     CommonModule
   ],
-  exports: [LightboxComponent]
+  exports: [],
+  entryComponents: [LightboxComponent]
 })
 export class LightboxModule { }

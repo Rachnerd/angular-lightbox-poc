@@ -1,12 +1,12 @@
 import {
   Component,
   ComponentFactoryResolver,
+  EventEmitter,
   OnDestroy,
   OnInit,
+  Output,
   ViewChild
 } from '@angular/core';
-import { LightboxService } from './shared/lightbox.service';
-import { Subscription } from 'rxjs';
 import { LightboxHostDirective } from './shared/lightbox-host.directive';
 import { LightboxOptions } from './shared/lightbox.model';
 
@@ -16,47 +16,18 @@ import { LightboxOptions } from './shared/lightbox.model';
   styleUrls: ['./lightbox.component.scss']
 })
 export class LightboxComponent implements OnInit, OnDestroy {
-  private subscription: Subscription;
-
   @ViewChild(LightboxHostDirective, { static: true })
   lightboxHost: LightboxHostDirective;
 
-  isOpen = false;
+  @Output()
+  closeEvent = new EventEmitter();
 
-  constructor(
-    private componentFactoryResolver: ComponentFactoryResolver,
-    private lightboxService: LightboxService
-  ) {}
+  options: LightboxOptions;
+
+  constructor(private componentFactoryResolver: ComponentFactoryResolver) {}
 
   ngOnInit() {
-    this.subscription = this.lightboxService.lightbox$.subscribe(options => {
-      this.lightboxHost.viewContainerRef.clear();
-
-      if (options === undefined) {
-        this.isOpen = false;
-        return;
-      } else {
-        this.loadComponent(options);
-        this.isOpen = true;
-      }
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.subscription.unsubscribe();
-  }
-
-  close() {
-    this.lightboxService.close();
-  }
-
-  preventClose(event) {
-    event.stopPropagation();
-    return false;
-  }
-
-  private loadComponent<T>(options: LightboxOptions<T>) {
-    const { component, data } = options;
+    const { component, data } = this.options;
 
     const componentFactory = this.componentFactoryResolver.resolveComponentFactory(
       component
@@ -66,5 +37,16 @@ export class LightboxComponent implements OnInit, OnDestroy {
       componentFactory
     );
     instance.data = data;
+  }
+
+  ngOnDestroy(): void {}
+
+  preventClose(event) {
+    event.stopPropagation();
+    return false;
+  }
+
+  close() {
+    this.closeEvent.emit();
   }
 }
