@@ -1,22 +1,20 @@
 import {
   ApplicationRef,
   ComponentFactoryResolver,
+  ComponentRef,
   EmbeddedViewRef,
   Injectable,
-  Injector,
-  ViewRef
+  Injector
 } from '@angular/core';
 import { LightboxOptions } from './lightbox.model';
 import { LightboxComponent } from '../lightbox.component';
-import { first } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class LightboxService {
-  private hostView: ViewRef;
-  private domElement: HTMLElement;
+  private lightboxRef: ComponentRef<LightboxComponent>;
   private closeSubscription: Subscription;
 
   constructor(
@@ -25,42 +23,117 @@ export class LightboxService {
     private componentFactoryResolver: ComponentFactoryResolver
   ) {}
 
+  /**
+   * Open a component inside a Lightbox.
+   */
   open<T>(options: LightboxOptions<T>) {
-    this.close();
+    /**
+     * Create a new Lightbox.
+     */
+    this.lightboxRef = this.createLightbox();
+    /**
+     * Add the desired component to the view of the Lightbox.
+     */
+    this.fillLightbox(this.lightboxRef, options);
+
+    /**
+     * Add the Lightbox to the application ref so change detection picks it up and life-cycle hooks are executed.
+     */
+    this.applicationRef.attachView(this.lightboxRef.hostView);
+
+    /**
+     * Get the root node of the LightBoxComponent.
+     */
+    const rootNode = (this.lightboxRef.hostView as EmbeddedViewRef<any>)
+      .rootNodes[0] as HTMLElement;
+
+    /**
+     * Append the Lightbox to the DOM.
+     */
+    document.body.appendChild(rootNode);
+  }
+
+  /**
+   * Bootstrap a component and add it to the Lightbox's LightboxHost directive.
+   */
+  private fillLightbox<T>(
+    lightboxRef: ComponentRef<LightboxComponent>,
+    { data, component }: LightboxOptions<T>
+  ): void {
+    /**
+     * Create a Component factory.
+     */
+    const componentFactory = this.componentFactoryResolver.resolveComponentFactory(
+      component
+    );
+
+    /**
+     * Angular always puts dynamically resolved components BESIDE the content of the viewContainerRef.
+     * If we would add the component directly to the viewContainerRef of the LightboxComponent it will
+     * result in:
+     *
+     *  <div class="lightbox" (click)="close()">
+     *    ...
+     *  </div>
+     *  <Component></Component> <---
+     *
+     * This can be fixed by using a directive (LightBoxHost). Now that the viewContainerRef of the
+     * directive is used the HTML will result in:
+     *
+     *  <div class="lightbox" (click)="close()">
+     *    ...
+     *      <ng-template pocLightboxHost></ng-template>
+     *      <Component></Component> <---
+     *    ...
+     *  </div>
+     */
+    const {
+      instance
+    } = lightboxRef.instance.lightboxHost.viewContainerRef.createComponent(
+      componentFactory
+    );
+
+    /**
+     * Pass the data received by the LightboxOptions to the instance of the newly created component.
+     */
+    instance.data = data;
+  }
+
+  private createLightbox(): ComponentRef<LightboxComponent> {
+    /**
+     * Create a Component factory.
+     */
     const componentFactory = this.componentFactoryResolver.resolveComponentFactory(
       LightboxComponent
     );
 
-    const { instance, hostView } = componentFactory.create(this.injector);
-    instance.options = options;
+    /**
+     * Create the Component manually (so not based on a viewContainerRef which has its own ref to
+     * an injector).
+     */
+    const factory = componentFactory.create(this.injector);
 
-    this.closeSubscription = instance.closeEvent
-      .pipe(first())
-      .subscribe(() => this.close());
+    /**
+     * Since we never use the component in the DOM we have to subscribe to the close event over here.
+     * This also prevents circular dependencies because the Lightbox does not need to inject this service.
+     */
+    this.closeSubscription = factory.instance.closeEvent.subscribe(() =>
+      this.close()
+    );
 
-    this.hostView = hostView;
-
-    this.applicationRef.attachView(this.hostView);
-
-    this.domElement = (this.hostView as EmbeddedViewRef<any>)
-      .rootNodes[0] as HTMLElement;
-
-    document.body.appendChild(this.domElement);
+    return factory;
   }
 
   close() {
-    if (this.domElement) {
-      document.body.removeChild(this.domElement);
-      this.domElement = undefined;
-    }
-
-    if (this.hostView) {
-      this.applicationRef.detachView(this.hostView);
-      this.hostView = undefined;
-    }
-
-    if (this.closeSubscription) {
+    if (this.lightboxRef) {
+      /**
+       * Stop listening to the close event.
+       */
       this.closeSubscription.unsubscribe();
+      /**
+       * Detach the component from change detection and life-cycle.
+       */
+      this.applicationRef.detachView(this.lightboxRef.hostView);
     }
   }
 }

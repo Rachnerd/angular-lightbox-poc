@@ -1,6 +1,5 @@
 import {
   Component,
-  ComponentFactoryResolver,
   EventEmitter,
   OnDestroy,
   OnInit,
@@ -8,7 +7,6 @@ import {
   ViewChild
 } from '@angular/core';
 import { LightboxHostDirective } from './shared/lightbox-host.directive';
-import { LightboxOptions } from './shared/lightbox.model';
 
 @Component({
   selector: 'poc-lightbox',
@@ -22,22 +20,7 @@ export class LightboxComponent implements OnInit, OnDestroy {
   @Output()
   closeEvent = new EventEmitter();
 
-  options: LightboxOptions;
-
-  constructor(private componentFactoryResolver: ComponentFactoryResolver) {}
-
-  ngOnInit() {
-    const { component, data } = this.options;
-
-    const componentFactory = this.componentFactoryResolver.resolveComponentFactory(
-      component
-    );
-
-    const { instance } = this.lightboxHost.viewContainerRef.createComponent(
-      componentFactory
-    );
-    instance.data = data;
-  }
+  ngOnInit() {}
 
   ngOnDestroy(): void {}
 
