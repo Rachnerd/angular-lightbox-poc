@@ -53,6 +53,31 @@ export class LightboxService {
     document.body.appendChild(rootNode);
   }
 
+  private createLightbox(): ComponentRef<LightboxComponent> {
+    /**
+     * Create a Component factory.
+     */
+    const componentFactory = this.componentFactoryResolver.resolveComponentFactory(
+      LightboxComponent
+    );
+
+    /**
+     * Create the Component manually (so not based on a viewContainerRef which has its own ref to
+     * an injector).
+     */
+    const factory = componentFactory.create(this.injector);
+
+    /**
+     * Since we never use the component in the DOM we have to subscribe to the close event over here.
+     * This also prevents circular dependencies because the Lightbox does not need to inject this service.
+     */
+    this.closeSubscription = factory.instance.closeEvent.subscribe(() =>
+      this.close()
+    );
+
+    return factory;
+  }
+
   /**
    * Bootstrap a component and add it to the Lightbox's LightboxHost directive.
    */
@@ -99,41 +124,20 @@ export class LightboxService {
     instance.data = data;
   }
 
-  private createLightbox(): ComponentRef<LightboxComponent> {
-    /**
-     * Create a Component factory.
-     */
-    const componentFactory = this.componentFactoryResolver.resolveComponentFactory(
-      LightboxComponent
-    );
-
-    /**
-     * Create the Component manually (so not based on a viewContainerRef which has its own ref to
-     * an injector).
-     */
-    const factory = componentFactory.create(this.injector);
-
-    /**
-     * Since we never use the component in the DOM we have to subscribe to the close event over here.
-     * This also prevents circular dependencies because the Lightbox does not need to inject this service.
-     */
-    this.closeSubscription = factory.instance.closeEvent.subscribe(() =>
-      this.close()
-    );
-
-    return factory;
-  }
-
   close() {
-    if (this.lightboxRef) {
+    if (this.closeSubscription) {
       /**
        * Stop listening to the close event.
        */
       this.closeSubscription.unsubscribe();
+    }
+
+    if (this.lightboxRef) {
       /**
        * Detach the component from change detection and life-cycle.
        */
       this.applicationRef.detachView(this.lightboxRef.hostView);
+      this.lightboxRef = undefined;
     }
   }
 }
