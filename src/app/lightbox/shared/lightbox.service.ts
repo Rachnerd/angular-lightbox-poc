@@ -6,27 +6,48 @@ import {
   Injectable,
   Injector
 } from '@angular/core';
-import { Subscription } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
 import { LightboxComponent } from '../lightbox.component';
 import { LightboxOptions } from './lightbox.model';
+import { filter } from 'rxjs/operators';
+
+type LigthboxAction = 'close' | 'open';
+
+interface LightboxEvent<T = any> {
+  options: LightboxOptions<T>;
+  action: LigthboxAction;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class LightboxService {
+  open$: Observable<LightboxEvent>;
+  close$: Observable<LightboxEvent>;
+  private events: Subject<LightboxEvent>;
+
   private lightboxRef: ComponentRef<LightboxComponent>;
   private closeSubscription: Subscription;
+
+  private activeOptions: LightboxOptions;
 
   constructor(
     private applicationRef: ApplicationRef,
     private componentFactoryResolver: ComponentFactoryResolver,
     private injector: Injector
-  ) {}
+  ) {
+    this.events = new Subject();
+    this.open$ = this.events.pipe(filter(({ action }) => action === 'open'));
+    this.close$ = this.events.pipe(filter(({ action }) => action === 'close'));
+  }
 
   /**
    * Open a component inside a Lightbox.
    */
   open<T>(options: LightboxOptions<T>) {
+    if (this.activeOptions) {
+      throw Error('Lightbox already active');
+    }
     /**
      * Create a new Lightbox.
      */
@@ -52,6 +73,13 @@ export class LightboxService {
      * Append the Lightbox to the DOM.
      */
     document.body.appendChild(rootNode);
+
+    this.activeOptions = options;
+
+    this.events.next({
+      options,
+      action: 'open'
+    });
   }
 
   close() {
@@ -68,6 +96,15 @@ export class LightboxService {
        */
       this.applicationRef.detachView(this.lightboxRef.hostView);
       this.lightboxRef = undefined;
+    }
+
+    if (this.activeOptions) {
+      this.events.next({
+        options: this.activeOptions,
+        action: 'close'
+      });
+
+      this.activeOptions = undefined;
     }
   }
 

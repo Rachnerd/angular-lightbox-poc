@@ -1,7 +1,8 @@
 import { LightboxService } from './lightbox.service';
-import { LightboxData } from './lightbox.model';
+import { LightboxData, LightboxOptions } from './lightbox.model';
 import { LightboxComponent } from '../lightbox.component';
 import resetAllMocks = jest.resetAllMocks;
+import { first } from 'rxjs/operators';
 
 describe('LightboxService', () => {
   let lightboxService: LightboxService;
@@ -41,6 +42,11 @@ describe('LightboxService', () => {
   let testComponentFactory;
   let testComponentFactoryResolver;
 
+  const LIGHTBOX_OPTIONS: LightboxOptions<string> = {
+    component: TestComponent,
+    data: 'test'
+  };
+
   beforeEach(() => {
     lightboxFactory = {
       instance: new LightboxComponent(),
@@ -71,7 +77,7 @@ describe('LightboxService', () => {
     };
 
     /**
-     * First call to componentFactoryResolver resolves the lightbox component
+     * First call to componentFactoryResolver resolves the Lightbox component
      */
     componentFactoryResolver.resolveComponentFactory.mockReturnValueOnce(
       lightboxFeatureFactoryResolver
@@ -85,84 +91,146 @@ describe('LightboxService', () => {
     );
 
     spyOn(document.body, 'appendChild');
+  });
+  describe('Open Lightbox', () => {
+    beforeEach(() => {
+      lightboxService.open(LIGHTBOX_OPTIONS);
+    });
 
-    lightboxService.open({
-      component: TestComponent,
-      data: 'test'
+    it('should create LightboxFeature', () => {
+      expect(
+        componentFactoryResolver.resolveComponentFactory
+      ).toHaveBeenCalledWith(LightboxComponent);
+
+      expect(lightboxFeatureFactoryResolver.create).toHaveBeenCalledWith(
+        injector
+      );
+    });
+
+    it('should attach LightboxFeature to the applicationRef', () => {
+      expect(applicationRef.attachView).toHaveBeenCalledWith(
+        lightboxFactory.hostView
+      );
+    });
+
+    it('should listen for close events of the Lightbox', () => {
+      spyOn(lightboxService, 'close');
+
+      lightboxFactory.instance.close();
+
+      expect(lightboxService.close).toHaveBeenCalledTimes(1);
+    });
+
+    it('should create TestComponent', () => {
+      expect(
+        componentFactoryResolver.resolveComponentFactory
+      ).toHaveBeenCalledWith(TestComponent);
+    });
+
+    it('should add TestComponent to the LightboxHostDirective viewContainerRef', () => {
+      expect(
+        lightboxFactory.instance.lightboxHost.viewContainerRef.createComponent
+      ).toHaveBeenCalledWith(testComponentFactoryResolver);
+    });
+
+    it('should set the data field of TestComponent', () => {
+      expect(testComponentFactory.instance.data).toEqual('test');
+      expect(
+        testComponentFactory.changeDetectorRef.detectChanges
+      ).toHaveBeenCalledTimes(1);
+    });
+
+    it('should add LightboxFeature to the LightboxHostDirective viewContainerRef', () => {
+      expect(
+        lightboxFactory.instance.lightboxHost.viewContainerRef.createComponent
+      ).toHaveBeenCalledWith(testComponentFactoryResolver);
+    });
+
+    it('should only support 1 open Lightbox at the time', () => {
+      expect(() => {
+        lightboxService.open(LIGHTBOX_OPTIONS);
+      }).toThrow();
     });
   });
 
-  it('should create LightboxFeature', () => {
-    expect(
-      componentFactoryResolver.resolveComponentFactory
-    ).toHaveBeenCalledWith(LightboxComponent);
+  describe('Close Lightbox', () => {
+    beforeEach(() => {
+      lightboxService.open(LIGHTBOX_OPTIONS);
+    });
 
-    expect(lightboxFeatureFactoryResolver.create).toHaveBeenCalledWith(
-      injector
-    );
-  });
-
-  it('should attach LightboxFeature to the applicationRef', () => {
-    expect(applicationRef.attachView).toHaveBeenCalledWith(
-      lightboxFactory.hostView
-    );
-  });
-
-  it('should listen for close events of the lightbox', () => {
-    spyOn(lightboxService, 'close');
-
-    lightboxFactory.instance.close();
-
-    expect(lightboxService.close).toHaveBeenCalledTimes(1);
-  });
-
-  it('should create TestComponent', () => {
-    expect(
-      componentFactoryResolver.resolveComponentFactory
-    ).toHaveBeenCalledWith(TestComponent);
-  });
-
-  it('should add TestComponent to the LightboxHostDirective viewContainerRef', () => {
-    expect(
-      lightboxFactory.instance.lightboxHost.viewContainerRef.createComponent
-    ).toHaveBeenCalledWith(testComponentFactoryResolver);
-  });
-
-  it('should set the data field of TestComponent', () => {
-    expect(testComponentFactory.instance.data).toEqual('test');
-    expect(
-      testComponentFactory.changeDetectorRef.detectChanges
-    ).toHaveBeenCalledTimes(1);
-  });
-
-  it('should add LightboxFeature to the LightboxHostDirective viewContainerRef', () => {
-    expect(
-      lightboxFactory.instance.lightboxHost.viewContainerRef.createComponent
-    ).toHaveBeenCalledWith(testComponentFactoryResolver);
-  });
-
-  it('should unsubscribe from the close event after closing the Lightbox', () => {
-    // tslint:disable-next-line
-    spyOn(lightboxService['closeSubscription'], 'unsubscribe');
-
-    lightboxService.close();
-
-    expect(
+    it('should unsubscribe from the close event after closing the Lightbox', () => {
       // tslint:disable-next-line
-      lightboxService['closeSubscription'].unsubscribe
-    ).toHaveBeenCalledTimes(1);
+      spyOn(lightboxService['closeSubscription'], 'unsubscribe');
+
+      lightboxService.close();
+
+      expect(
+        // tslint:disable-next-line
+        lightboxService['closeSubscription'].unsubscribe
+      ).toHaveBeenCalledTimes(1);
+    });
+
+    it('should detach LightboxFeature from the applicationRef after closing', () => {
+      lightboxService.close();
+
+      expect(applicationRef.detachView).toHaveBeenCalledWith(
+        lightboxFactory.hostView
+      );
+    });
+
+    it('should not fail if closed multiple times', () => {
+      lightboxService.close();
+      lightboxService.close();
+    });
   });
 
-  it('should detach LightboxFeature from the applicationRef after closing', () => {
-    lightboxService.close();
+  describe('Events', () => {
+    it('should emit an event when a Lightbox is opened', () => {
+      const spy = jest.fn();
 
-    expect(applicationRef.detachView).toHaveBeenCalledWith(
-      lightboxFactory.hostView
-    );
-  });
+      lightboxService.open$.pipe(first()).subscribe(spy);
+      lightboxService.open(LIGHTBOX_OPTIONS);
 
-  it('should not fail if closed multiple times', () => {
-    lightboxService.close();
-    lightboxService.close();
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy).toHaveBeenCalledWith({
+        options: LIGHTBOX_OPTIONS,
+        action: 'open'
+      });
+    });
+
+    it('should emit an event when a Lightbox is closed', () => {
+      const spy = jest.fn();
+
+      lightboxService.open(LIGHTBOX_OPTIONS);
+
+      lightboxService.close$.pipe(first()).subscribe(spy);
+
+      lightboxService.close();
+
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy).toHaveBeenCalledWith({
+        options: LIGHTBOX_OPTIONS,
+        action: 'close'
+      });
+    });
+
+    it('should emit exactly 1 event when a Lightbox is closed', () => {
+      const spy = jest.fn();
+
+      lightboxService.open(LIGHTBOX_OPTIONS);
+
+      const sub = lightboxService.close$.subscribe(spy);
+
+      lightboxService.close();
+      lightboxService.close();
+
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy).toHaveBeenCalledWith({
+        options: LIGHTBOX_OPTIONS,
+        action: 'close'
+      });
+
+      sub.unsubscribe();
+    });
   });
 });
