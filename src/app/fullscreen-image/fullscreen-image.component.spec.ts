@@ -21,6 +21,10 @@ describe('FullscreenImageComponent', () => {
     component = new FullscreenImageComponent(lightboxService);
   });
 
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should close the lightbox', () => {
     component.close();
     expect(lightboxService.close).toHaveBeenCalledTimes(1);

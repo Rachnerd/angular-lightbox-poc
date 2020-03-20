@@ -8,15 +8,9 @@ import {
 } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { LightboxComponent } from '../lightbox.component';
-import { LightboxOptions } from './lightbox.model';
+import { LightboxEvent, LightboxOptions } from './lightbox.model';
 import { filter } from 'rxjs/operators';
 
-type LigthboxAction = 'close' | 'open';
-
-interface LightboxEvent<T = any> {
-  options: LightboxOptions<T>;
-  action: LigthboxAction;
-}
 
 @Injectable({
   providedIn: 'root'
