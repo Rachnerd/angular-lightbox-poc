@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { LightboxService } from '../lightbox/shared/lightbox.service';
-import { LightboxComponent } from '../lightbox/shared/lightbox.model';
+import { LightboxData } from '../lightbox/shared/lightbox.model';
 import { FullscreenImageData } from './shared/fullscreen-image.model';
 
 @Component({
@@ -9,7 +9,7 @@ import { FullscreenImageData } from './shared/fullscreen-image.model';
   styleUrls: ['./fullscreen-image.component.scss']
 })
 export class FullscreenImageComponent
-  implements OnInit, LightboxComponent<FullscreenImageData> {
+  implements OnInit, LightboxData<FullscreenImageData> {
   data: FullscreenImageData;
   loaded = false;
   isLandscape = true;

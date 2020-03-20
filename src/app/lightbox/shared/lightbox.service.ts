@@ -4,11 +4,11 @@ import {
   ComponentRef,
   EmbeddedViewRef,
   Injectable,
-  Injector
+  Injector,
 } from '@angular/core';
-import { LightboxOptions } from './lightbox.model';
-import { LightboxComponent } from '../lightbox.component';
 import { Subscription } from 'rxjs';
+import { LightboxComponent } from '../lightbox.component';
+import { LightboxOptions } from './lightbox.model';
 
 @Injectable({
   providedIn: 'root'
@@ -19,8 +19,8 @@ export class LightboxService {
 
   constructor(
     private applicationRef: ApplicationRef,
-    private injector: Injector,
-    private componentFactoryResolver: ComponentFactoryResolver
+    private componentFactoryResolver: ComponentFactoryResolver,
+    private injector: Injector
   ) {}
 
   /**
@@ -31,6 +31,7 @@ export class LightboxService {
      * Create a new Lightbox.
      */
     this.lightboxRef = this.createLightbox();
+
     /**
      * Add the desired component to the view of the Lightbox.
      */
@@ -113,7 +114,8 @@ export class LightboxService {
      *  </div>
      */
     const {
-      instance
+      instance,
+      changeDetectorRef,
     } = lightboxRef.instance.lightboxHost.viewContainerRef.createComponent(
       componentFactory
     );
@@ -122,10 +124,15 @@ export class LightboxService {
      * Pass the data received by the LightboxOptions to the instance of the newly created component.
      */
     instance.data = data;
+
+    /**
+     * Call change detection to prevent "expression changed after it has been checked" error.
+     */
+    changeDetectorRef.detectChanges();
   }
 
   close() {
-    if (this.closeSubscription) {
+    if (this.closeSubscription && !this.closeSubscription.closed) {
       /**
        * Stop listening to the close event.
        */
