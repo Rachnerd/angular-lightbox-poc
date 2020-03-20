@@ -8,14 +8,16 @@ describe('FullscreenImageComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ FullscreenImageComponent ]
-    })
-    .compileComponents();
+      declarations: [FullscreenImageComponent]
+    }).compileComponents();
   }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(FullscreenImageComponent);
     component = fixture.componentInstance;
+    component.data = {
+      src: ''
+    };
     fixture.detectChanges();
   });
 

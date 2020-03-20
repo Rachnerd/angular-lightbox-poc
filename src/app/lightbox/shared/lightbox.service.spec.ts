@@ -17,6 +17,9 @@ describe('LightboxService', () => {
 
   const injector = {} as any;
 
+  /**
+   * Rabobank doesn't use Testbed.
+   */
   beforeEach(() => {
     lightboxService = new LightboxService(
       applicationRef,
