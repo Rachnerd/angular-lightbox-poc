@@ -8,9 +8,8 @@ describe('LightboxPortalComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ LightboxComponent ]
-    })
-    .compileComponents();
+      declarations: [LightboxComponent]
+    }).compileComponents();
   }));
 
   beforeEach(() => {

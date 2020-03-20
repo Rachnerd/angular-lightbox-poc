@@ -4,7 +4,7 @@ import {
   ComponentRef,
   EmbeddedViewRef,
   Injectable,
-  Injector,
+  Injector
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { LightboxComponent } from '../lightbox.component';
@@ -115,7 +115,7 @@ export class LightboxService {
      */
     const {
       instance,
-      changeDetectorRef,
+      changeDetectorRef
     } = lightboxRef.instance.lightboxHost.viewContainerRef.createComponent(
       componentFactory
     );

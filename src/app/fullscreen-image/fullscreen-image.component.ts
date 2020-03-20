@@ -19,7 +19,7 @@ export class FullscreenImageComponent
   ngOnInit() {}
 
   close() {
-      this.lightboxService.close();
+    this.lightboxService.close();
   }
 
   determineOrientation({ target }) {

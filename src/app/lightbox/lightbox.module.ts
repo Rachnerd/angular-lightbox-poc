@@ -5,10 +5,8 @@ import { LightboxHostDirective } from './shared/lightbox-host.directive';
 
 @NgModule({
   declarations: [LightboxComponent, LightboxHostDirective],
-  imports: [
-    CommonModule
-  ],
+  imports: [CommonModule],
   exports: [],
   entryComponents: [LightboxComponent]
 })
-export class LightboxModule { }
+export class LightboxModule {}
