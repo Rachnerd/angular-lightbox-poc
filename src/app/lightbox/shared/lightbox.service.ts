@@ -54,6 +54,23 @@ export class LightboxService {
     document.body.appendChild(rootNode);
   }
 
+  close() {
+    if (this.closeSubscription && !this.closeSubscription.closed) {
+      /**
+       * Stop listening to the close event.
+       */
+      this.closeSubscription.unsubscribe();
+    }
+
+    if (this.lightboxRef) {
+      /**
+       * Detach the component from change detection and life-cycle.
+       */
+      this.applicationRef.detachView(this.lightboxRef.hostView);
+      this.lightboxRef = undefined;
+    }
+  }
+
   private createLightbox(): ComponentRef<LightboxComponent> {
     /**
      * Create a Component factory.
@@ -129,22 +146,5 @@ export class LightboxService {
      * Call change detection to prevent "expression changed after it has been checked" error.
      */
     changeDetectorRef.detectChanges();
-  }
-
-  close() {
-    if (this.closeSubscription && !this.closeSubscription.closed) {
-      /**
-       * Stop listening to the close event.
-       */
-      this.closeSubscription.unsubscribe();
-    }
-
-    if (this.lightboxRef) {
-      /**
-       * Detach the component from change detection and life-cycle.
-       */
-      this.applicationRef.detachView(this.lightboxRef.hostView);
-      this.lightboxRef = undefined;
-    }
   }
 }
